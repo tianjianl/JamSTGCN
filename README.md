@@ -13,6 +13,10 @@ Bag of Tricks for Node Classification with Graph Neural Networks https://arxiv.o
 Attention Based Spatial-Temporal Graph Convolutional Networks for Traffic Flow Forecasting  https://ojs.aaai.org//index.php/AAAI/article/view/3881 (ASTGCN)
 
 ## Structural Modifications 
+#### Residual connection in graph convolution layer
+
+#### Incorporation of historical jam patterns
+截屏2021-12-01 下午3.35.25<img width="551" alt="截屏2021-12-01 下午3 35 25" src="https://user-images.githubusercontent.com/20365304/144978158-b4baf9fd-a18c-40c5-9c77-dd73572f6ed3.png">
 
 
 ## Requirements
