@@ -14,14 +14,18 @@ Attention Based Spatial-Temporal Graph Convolutional Networks for Traffic Flow F
 
 ## Structural Modifications 
 #### Residual connection in graph convolution layer
+Graph Neural Networks often suffer from oversmoothing problems: as the layers become deep, the representations of node tend to become similar. Adding a residual connection mitigates the oversmoothing problem by adding the input unsmoothed features directly to the output of graph convolution operation. Furthermore, the connections helps against gradient instablities. 
+<img width="276" alt="截屏2021-12-07 下午2 41 47" src="https://user-images.githubusercontent.com/20365304/144980066-f5936af9-961a-4f51-857a-269b35b3ffaa.png">
 
-#### Incorporation of historical jam patterns
-截屏2021-12-01 下午3.35.25<img width="551" alt="截屏2021-12-01 下午3 35 25" src="https://user-images.githubusercontent.com/20365304/144978158-b4baf9fd-a18c-40c5-9c77-dd73572f6ed3.png">
+#### Incorporation of historical jam pattern
+Jam status often follow weekly patterns. In order to let the model study historical patterns, we directly feed the model historical jam data with the same day and hour aligned. For example, if we want to predict the traffic status at 8PM. 30, Nov, 2021, we feed the model the 8PM traffic status in the past 12 tuesdays directly through a graph convolution layer. Then concat it with the output of the S-T convolution blocks to generate the input of the final classifying layer.
+<img width="551" alt="截屏2021-12-01 下午3 35 25" src="https://user-images.githubusercontent.com/20365304/144978158-b4baf9fd-a18c-40c5-9c77-dd73572f6ed3.png">
 
+#### Classification
+The original STGCN model was a regression model, optimizing a mean squared loss. Our traffic jam status has four classes: 1 -- smooth traffic; 2 -- temperate jam; 3 -- moderate jam; 4 -- heavy jam. So we changed it into a softmax with cross entropy classification model.
 
 ## Requirements
 
-
 ## Experiments
 
-
+## Further Directions 
