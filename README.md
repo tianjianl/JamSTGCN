@@ -13,7 +13,7 @@ Bag of Tricks for Node Classification with Graph Neural Networks https://arxiv.o
 Attention Based Spatial-Temporal Graph Convolutional Networks for Traffic Flow Forecasting  https://ojs.aaai.org//index.php/AAAI/article/view/3881 (ASTGCN)
 
 ## Structural Modifications 
-#### Graph Operation  
+#### Graph operation  
 
 The original STGCN model facilitates 1-st order ChebyConv and GCN as the graph operation. In our model we conducted experiments on one spectral method(GCN) and two spatial methods(GAT, GraphSAGE) 
 #### Residual connection in graph convolution layer
@@ -22,7 +22,7 @@ Graph Neural Networks often suffer from oversmoothing problems: as the layers be
 <img width="276" alt="截屏2021-12-07 下午2 41 47" src="https://user-images.githubusercontent.com/20365304/144980066-f5936af9-961a-4f51-857a-269b35b3ffaa.png">
 
 #### Incorporation of historical jam pattern
-Jam status often follow weekly patterns. In order to let the model study historical patterns, we directly feed the model historical jam data with the same day and hour aligned. For example, if we want to predict the traffic status at 8PM. 30, Nov, 2021, we feed the model the 8PM traffic status in the past 12 tuesdays directly through a graph convolution layer, then concat it with the output of the S-T convolution blocks to generate the input of the final classifying layer.  
+Jam status often follow daily patterns. In order to let the model study historical patterns, we directly feed the model historical jam data with the same hour aligned. For example, if we want to predict the traffic status at 8PM. 30, Nov, 2021, we feed the model the 8PM traffic status in the past 12 days directly through a graph convolution layer, then concat it with the output of the S-T convolution blocks to generate the input of the final classifying layer.  
 
 <img width="551" alt="截屏2021-12-01 下午3 35 25" src="https://user-images.githubusercontent.com/20365304/144978158-b4baf9fd-a18c-40c5-9c77-dd73572f6ed3.png">
 
@@ -36,4 +36,3 @@ numpy 1.21.4
 tqdm 4.62.3  
 
 ## Experiments
-## Further Directions 
