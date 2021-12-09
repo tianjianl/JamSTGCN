@@ -36,3 +36,13 @@ numpy 1.21.4
 tqdm 4.62.3  
 
 ## Experiments
+All experiments was conducted with early stopping.
+|    Model    |Test Accuracy|
+| :---------: | :---------: |
+|  benchmark  |  64.306%    |
+| GAT         | 64.630%     | 
+|  GAT+his    |  66.498%    |
+|  GraphSAGE  |  67.382%    |
+| GraphSAGE + his|  64.731% |
+
+
