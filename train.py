@@ -24,12 +24,6 @@ def main(args):
 
     gf = GraphFactory(args)
     model = STGCNModel(args)
-#   train_loss = fl.reduce_sum((y - label) * (y - label))
-#   lr = fl.exponential_decay(
-#           learning_rate=args.lr,
-#           #decay_steps=5 * epoch_step,
-#           decay_rate=0.7,
-#           staircase=True)
 #   lr = paddle.optimizer.lr.ExponentialDecay(learning_rate=args.lr, gamma=0.7, verbose=False)          
     
     lr = args.lr
@@ -98,8 +92,8 @@ if __name__ == "__main__":
     parser.add_argument('--input_prev', type=str, default='dataset/input.csv')
     parser.add_argument('--adj_mat_file', type=str, default='dataset/W.csv')
     parser.add_argument('--output_path', type=str, default='./outputs/')
-    parser.add_argument('--n_val', type=int, default=4)
-    parser.add_argument('--n_test', type=int, default=4)
+    parser.add_argument('--n_val', type=int, default=72)
+    parser.add_argument('--n_test', type=int, default=72)
     parser.add_argument('--graph_operation', type=str, default='GCN', help = 'graph operation in spatio block, default = GCN, possbile values:GCN, GAT, GraphSAGE')
     parser.add_argument('--act_func', type = str, default = 'GLU')
     parser.add_argument('--use_cuda', action='store_true')
