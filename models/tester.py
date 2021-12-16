@@ -135,8 +135,9 @@ def model_test(gf, model, pred, inputs, args):
         tf = evg
         te = evl
         print(
-            f'Time Step {i + 1}: MAPE {te[0]:7.3%}; MAE  {te[1]:4.3f}; RMSE {te[2]:6.3f}.'
+            f'Test set: ACC {te[0]:7.3%}; MAE  {te[1]:4.3f}; RMSE {te[2]:6.3f}.'
         )
         print(
-            f'BaseLine_Time Step {i + 1}: MAPE {tf[0]:7.3%}; MAE  {tf[1]:4.3f}; RMSE {tf[2]:6.3f}.'
+            f'Benchmark: ACC {tf[0]:7.3%}; MAE  {tf[1]:4.3f}; RMSE {tf[2]:6.3f}.'
         )
+    return y_test

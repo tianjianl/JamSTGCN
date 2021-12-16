@@ -5,7 +5,6 @@ import paddle.fluid as fluid
 import paddle.fluid.layers as fl
 import pgl.nn as p
 
-
 class STGCNModel(paddle.nn.Layer):
     """Implementation of Spatio-Temporal Graph Convolutional Networks"""
     def __init__(self, args):
@@ -61,7 +60,9 @@ class STGCNModel(paddle.nn.Layer):
                             bias_attr = paddle.ParamAttr(trainable = True))
         #output layer
         name = 'outputlayer'
-        outdim = blocks[1][2] + blocks[0][1]
+        outdim = blocks[1][2]
+        if self.args.use_his == True:
+            outdim += blocks[0][1] 
         self.conv2do_1 = nn.Conv2D(outdim, outdim*self.multiplier, self.args.n_his, weight_attr = paddle.ParamAttr(name = name + 'conv2d', trainable = True), data_format = 'NHWC', padding = "SAME", bias_attr = paddle.ParamAttr(trainable = True))
         self.conv2do_2 = nn.Conv2D(outdim, outdim, 1, weight_attr = paddle.ParamAttr(name = name + 'conv2d2', trainable = True), data_format = 'NHWC', bias_attr = paddle.ParamAttr(trainable = True)) 
         self.ln_o = nn.LayerNorm((self.args.n_his, args.n_route, outdim), weight_attr = paddle.ParamAttr(name = name + 'ln', trainable = True), bias_attr = paddle.ParamAttr(trainable = True))
@@ -80,19 +81,19 @@ class STGCNModel(paddle.nn.Layer):
         x = self.emb(x)
         w = self.emb(w)
         #two st conv blocks
-        x = self.st_conv_block(
-                graph,
-                x,
-                self.args.keep_prob,
-                1,
-                act_func = self.args.act_func)
+        if self.args.layers == 2:
+            x = self.st_conv_block(
+                    graph,
+                    x,
+                    self.args.keep_prob,
+                    1,
+                    act_func = self.args.act_func)
         x = self.st_conv_block(
                 graph,
                 x,
                 self.args.keep_prob,
                 2,
                 act_func = self.args.act_func)
-
         w = self.spatio_conv_layer(graph, 0, w)
         
         # output layer
@@ -110,8 +111,7 @@ class STGCNModel(paddle.nn.Layer):
         #shape pf y_pred [B, T, N, C_out]
         #y_pred = y_pred[:, 0:1, :, :] 
        
-        y_pred = paddle.transpose(y_pred, [0, 2, 1, 3]) # B N T C
-        
+        y_pred = paddle.transpose(y_pred, [0, 2, 1, 3]) # B N T C 
         y_pred = paddle.reshape(y_pred, [y_pred.shape[0], self.args.n_route, -1]) #B N T*C
         y_pred = self.mapfc(y_pred) #B N C
         y_pred = nn.functional.relu(y_pred)
@@ -119,7 +119,7 @@ class STGCNModel(paddle.nn.Layer):
         #shape of y = [B, N, 1]
         loss, pred_softmax = nn.functional.softmax_with_cross_entropy(
                 logits=y_pred, label=y, return_softmax=True)
-        loss = paddle.mean(loss, axis = 1)
+        loss = paddle.mean(loss)
         single_pred = paddle.argmax(y_pred, axis = -1)
         return single_pred, loss
 
@@ -172,8 +172,10 @@ class STGCNModel(paddle.nn.Layer):
         if num_st != 3:
             c_out = self.args.blocks[num_st - 1][num_temp]
         else:
-            c_out = self.args.blocks[1][2] + self.args.blocks[0][1]
-        
+            if self.args.use_his == True:
+                c_out = self.args.blocks[1][2] + self.args.blocks[0][1]
+            else:
+                c_out = self.args.blocks[1][2]
         if c_in > c_out:
             conv = self.getconv(num_st, 0)
             x_input = conv(x)
@@ -223,8 +225,8 @@ class STGCNModel(paddle.nn.Layer):
             x_input = self.graphconv2(graph, x_input)
         elif num == 0:
             x_input = self.graphconvw(graph, x_input)
-            
         x_input = fl.reshape(x_input, [-1, T, n, c_out])
+        
         x_input = x_input + x
         x_input = nn.functional.relu(x_input)
         return x_input
@@ -233,8 +235,8 @@ class STGCNModel(paddle.nn.Layer):
         """Output layer"""
         _, _, n, channel = x.shape
         
-        
-        x = paddle.concat((x, w), axis = -1)
+        if self.args.use_his == True:
+            x = paddle.concat((x, w), axis = -1)
         #now x.shape = B, T, N, blocks[1][2] + blocks[0][1]
         
         # maps multi-steps to one.

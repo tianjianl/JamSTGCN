@@ -1,6 +1,7 @@
 """
 data processing
 """
+import os
 import numpy as np
 import pandas as pd
 import tqdm
@@ -44,28 +45,40 @@ def seq_gen(len_seq, data_seq, offset, n_frame, n_route, day_slot, C_0=1):
     return tmp_seq
 
 
-def data_gen_mydata(input_file, input_prev, n, n_his, n_pred, n_config):
+def data_gen_mydata(input_file, input_prev, n, n_his, n_pred, interval, dataset, n_config):
     """data processing
     """
-    # data
-    x = pd.read_csv(input_file)
-    x_prev = pd.read_csv(input_prev)
-    x = x.drop(columns=['date'])
-    x_prev = x_prev.drop(columns=['date'])
-
-    # param
+    #param
     n_val, n_test = n_config
-    df = pd.DataFrame(columns=x.columns)
-    #the time step we want to predict = i + n_his
-    for i in tqdm.tqdm(range(0, int(len(x)/2) - n_pred - n_his + 1)):
-        for j in range(i + n_his - 24*12, i + n_his - 24 + 1, 24):
-            if j < 0:
-                df = df.append(x_prev[j-1:j])
-            else:
-                df = df.append(x[j:j+1])
-        df = df.append(x[i:i + n_his + n_pred])
+    nums_per_hour = int(60/interval)
+    if os.path.isfile(dataset+'.csv'):
+#        df = pd.read_pickle(dataset+'.pkl')        
+        df = pd.read_csv(dataset+'.csv')
+        df = df.drop(columns=['date'])
+#        df.to_csv(dataset+'.csv')
+    # data
+    else:
+        x = pd.read_csv(input_file)
+        x_prev = pd.read_csv(input_prev)
+        x = x.drop(columns=['date'])
+        x_prev = x_prev.drop(columns=['date'])
     
-    print(df.iloc[:,:5].head(33))
+   
+        df = pd.DataFrame(columns=x.columns)
+        #the time step we want to predict = i + n_his
+        for i in tqdm.tqdm(range(0, len(x) - n_pred - n_his + 1)):
+            for j in range(i + n_his - 24*n_his*nums_per_hour, i + n_his - 24*nums_per_hour + 1, 24*nums_per_hour):
+                if j < 0:
+                    df = df.append(x_prev[j-1:j])
+                else:
+                    df = df.append(x[j:j+1])
+
+            df = df.append(x[i:i + n_his + n_pred])
+    
+        df.to_pickle(dataset+'.pkl')
+
+    print(df.iloc[:,:40].head(33))
+    
     data = df.values.reshape(-1, 2*n_his + n_pred,  n, 1)
     #total num of data n * (n_his + n_pred)
     n_train = data.shape[0] - n_val - n_test
@@ -117,8 +130,9 @@ def gen_batch(inputs, batch_size, dynamic_batch=False, shuffle=False):
         shuffle: bool, whether shuffle the batches.
     """
     len_inputs = len(inputs)
-
+    
     if shuffle:
+        np.random.seed(2021)
         idx = np.arange(len_inputs)
         np.random.shuffle(idx)
 
