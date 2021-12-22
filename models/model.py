@@ -5,6 +5,7 @@ import paddle.fluid as fluid
 import paddle.fluid.layers as fl
 import pgl.nn as p
 
+
 class STGCNModel(paddle.nn.Layer):
     """Implementation of Spatio-Temporal Graph Convolutional Networks"""
     def __init__(self, args):
@@ -32,7 +33,7 @@ class STGCNModel(paddle.nn.Layer):
             self.graphconvw = p.GATConv(blocks[0][0], blocks[0][1])
         elif self.args.graph_operation == 'GraphSAGE':
             self.graphconv1 = p.GraphSageConv(blocks[0][1], blocks[0][1], "max")
-            self.graphconvw = p.GraphSageConv(blocks[0][0], blocks[0][1], "max")
+            self.graphconvw = p.GraphSageConv(blocks[0][0], blocks[0][1], "mean")
         self.conv2d1_2 = nn.Conv2D(blocks[0][1], blocks[0][2], self.args.Kt, weight_attr = paddle.ParamAttr(name = name + 'conv2d1_2', trainable = True),
                             bias_attr = paddle.ParamAttr(trainable = True), data_format = 'NHWC', padding = "SAME")
         #shape = [-1, T, N, blocks[0][2]]
@@ -60,78 +61,48 @@ class STGCNModel(paddle.nn.Layer):
                             bias_attr = paddle.ParamAttr(trainable = True))
         #output layer
         name = 'outputlayer'
-        self.outdim = blocks[1][2]
-        if self.args.use_his == True:
-            self.outdim += blocks[0][1]*self.args.n_pred 
-        self.conv2do_1 = nn.Conv2D(self.outdim, self.outdim*self.multiplier, self.args.n_his, weight_attr = paddle.ParamAttr(name = name + 'conv2d', trainable = True), data_format = 'NHWC', padding = "SAME", bias_attr = paddle.ParamAttr(trainable = True))
-        self.conv2do_2 = nn.Conv2D(self.outdim, self.outdim, 1, weight_attr = paddle.ParamAttr(name = name + 'conv2d2', trainable = True), data_format = 'NHWC', bias_attr = paddle.ParamAttr(trainable = True)) 
-        self.ln_o = nn.LayerNorm((self.args.n_his, args.n_route, self.outdim), weight_attr = paddle.ParamAttr(name = name + 'ln', trainable = True), bias_attr = paddle.ParamAttr(trainable = True))
-        self.fc = nn.Linear(self.outdim, 5, weight_attr = paddle.ParamAttr(name = name + 'linear', trainable = True), bias_attr = paddle.ParamAttr(trainable = True))
+        outdim = blocks[1][2] + blocks[0][1]
+        self.conv2do_1 = nn.Conv2D(outdim, outdim*self.multiplier, self.args.n_his, weight_attr = paddle.ParamAttr(name = name + 'conv2d', trainable = True), data_format = 'NHWC', padding = "SAME", bias_attr = paddle.ParamAttr(trainable = True))
+        self.conv2do_2 = nn.Conv2D(outdim, outdim, 1, weight_attr = paddle.ParamAttr(name = name + 'conv2d2', trainable = True), data_format = 'NHWC', bias_attr = paddle.ParamAttr(trainable = True)) 
+        self.ln_o = nn.LayerNorm((self.args.n_his, args.n_route, outdim), weight_attr = paddle.ParamAttr(name = name + 'ln', trainable = True), bias_attr = paddle.ParamAttr(trainable = True))
+        self.fc = nn.Linear(outdim, 5, weight_attr = paddle.ParamAttr(name = name + 'linear', trainable = True), bias_attr = paddle.ParamAttr(trainable = True))
         self.mapfc = nn.Linear(self.args.n_his * 5, 5, weight_attr = paddle.ParamAttr(name = 'map_w'), bias_attr = paddle.ParamAttr(name = 'map_b'))
-        
-        self.timefc = nn.Linear(self.args.n_his*self.args.n_pred, self.args.n_his)
+
     def forward(self, graph, x_input):
         """forward"""
-        n_his = self.args.n_his
-        n_pred = self.args.n_pred
         x_input = paddle.to_tensor(x_input)
-        w = x_input[:, :n_his*n_pred, :, :]
-        #w.shape = [B, n_pred*T, N, 1] 
-        x = x_input[:, n_his*n_pred:n_his*(n_pred+1), :, :]
         
-        #B N C T
+        w = x_input[:, 0:12, :, :]
+        x = x_input[:, 12:self.args.n_his+12, :, :]
+        
         #shape = [B, T, N, 1]
         #emb dim = self.args.blocks[0][0]
         x = self.emb(x)
-        w = self.emb(w) 
-        
-        #w.shape = [B, n_pred*T, N, blocks00]
-       
-        l = []
-        if self.args.use_his == True:
-            for i in range(n_pred):
-                l.append(w[:,i*n_his:(i+1)*n_his,:,:])
-        
-            for index, _  in enumerate(l):
-                #each tensor shape is B T N C
-                l[index] = paddle.flatten(l[index], start_axis=3, stop_axis=4)
-        
-        
-        w = paddle.flatten(w, start_axis=3, stop_axis=4)
-        w = paddle.transpose(w, [0, 2, 3, 1])
-        w = self.timefc(w)
-        #B T N C 
-        w = paddle.transpose(w, [0, 3, 1, 2])
-       
-
+        w = self.emb(w)
         #two st conv blocks
-        if self.args.layers == 2:
-            x = self.st_conv_block(
-                    graph,
-                    x,
-                    self.args.keep_prob,
-                    1,
-                    act_func = self.args.act_func)
+        x = self.st_conv_block(
+                graph,
+                x,
+                self.args.keep_prob,
+                1,
+                act_func = self.args.act_func)
         x = self.st_conv_block(
                 graph,
                 x,
                 self.args.keep_prob,
                 2,
                 act_func = self.args.act_func)
+
         w = self.spatio_conv_layer(graph, 0, w)
         
-        if self.args.use_his == True:
-            for index, _ in enumerate(l):
-                l[index] = self.spatio_conv_layer(graph, 0, l[index])
-
         # output layer
         if self.args.n_his > 1:
-          y_pred = self.output_block(x, l)
+          y_pred = self.output_block(x, w)
         else:
             raise ValueError(f'ERROR: kernel size Ko must be greater than 1, \
                     but received "{n_his}".')
 
-        y = x_input[:, n_his*(n_pred+1):n_his*(n_pred+1)+1, :, :]
+        y = x_input[:, self.args.n_his:self.args.n_his + 1, :, :]
         
         y = paddle.to_tensor(y) # B 1 N 1
         y = paddle.cast(y, 'int64')
@@ -139,7 +110,8 @@ class STGCNModel(paddle.nn.Layer):
         #shape pf y_pred [B, T, N, C_out]
         #y_pred = y_pred[:, 0:1, :, :] 
        
-        y_pred = paddle.transpose(y_pred, [0, 2, 1, 3]) # B N T C 
+        y_pred = paddle.transpose(y_pred, [0, 2, 1, 3]) # B N T C
+        
         y_pred = paddle.reshape(y_pred, [y_pred.shape[0], self.args.n_route, -1]) #B N T*C
         y_pred = self.mapfc(y_pred) #B N C
         y_pred = nn.functional.relu(y_pred)
@@ -147,7 +119,7 @@ class STGCNModel(paddle.nn.Layer):
         #shape of y = [B, N, 1]
         loss, pred_softmax = nn.functional.softmax_with_cross_entropy(
                 logits=y_pred, label=y, return_softmax=True)
-        loss = paddle.mean(loss)
+        loss = paddle.mean(loss, axis = 1)
         single_pred = paddle.argmax(y_pred, axis = -1)
         return single_pred, loss
 
@@ -200,7 +172,8 @@ class STGCNModel(paddle.nn.Layer):
         if num_st != 3:
             c_out = self.args.blocks[num_st - 1][num_temp]
         else:
-            c_out = self.outdim
+            c_out = self.args.blocks[1][2] + self.args.blocks[0][1]
+        
         if c_in > c_out:
             conv = self.getconv(num_st, 0)
             x_input = conv(x)
@@ -239,6 +212,7 @@ class STGCNModel(paddle.nn.Layer):
             x = fl.reshape(x,[x.shape[0], x.shape[1], x.shape[2], x.shape[4]])
         
         _, T, n, c_out = x.shape
+        
         x_input = x
         x_input = fl.reshape(x_input, [-1, c_out])
         graph.tensor()
@@ -249,8 +223,8 @@ class STGCNModel(paddle.nn.Layer):
             x_input = self.graphconv2(graph, x_input)
         elif num == 0:
             x_input = self.graphconvw(graph, x_input)
+            
         x_input = fl.reshape(x_input, [-1, T, n, c_out])
-        
         x_input = x_input + x
         x_input = nn.functional.relu(x_input)
         return x_input
@@ -259,11 +233,8 @@ class STGCNModel(paddle.nn.Layer):
         """Output layer"""
         _, _, n, channel = x.shape
         
-        if self.args.use_his == True:
-            for tensor in w:
-                x = paddle.concat((x, tensor), axis=-1)
-
-           #x = paddle.concat((x, w), axis = -1)
+        
+        x = paddle.concat((x, w), axis = -1)
         #now x.shape = B, T, N, blocks[1][2] + blocks[0][1]
         
         # maps multi-steps to one.
