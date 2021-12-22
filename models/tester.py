@@ -1,16 +1,3 @@
-# Copyright (c) 2020 PaddlePaddle Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 """This file implement the testing process of STGCN model.
 """
@@ -38,16 +25,26 @@ def multi_pred(gf, model, y_pred, seq, batch_size, \
             seq, min(batch_size, len(seq)), dynamic_batch=dynamic_batch):
 
         # Note: use np.copy() to avoid the modification of source data.
-        test_seq = np.copy(i[:, 0:n_his*2 + 1, :, :]).astype(np.int32)
-        graph = gf.build_graph(i[:, 0:n_his, :, :])
+        test_seq = np.copy(i[:, :n_his*n_pred+n_his, :, :]).astype(np.int32)
+        
+        gt_seq = np.copy(i[:, -n_pred:, :, :]).astype(np.int32)
+
+        graph = gf.build_graph(i[:, n_his*n_pred:n_his*(n_pred+1), :, :])
         step_list = []
+
         for j in range(n_pred):
-            pred, _ = model(graph, test_seq)
+            
+            input_seq = np.concatenate((test_seq, gt_seq[:,j:j+1,:,:]),axis=1)
+
+            pred, _ = model(graph, input_seq)
             if isinstance(pred, list):
                 pred = np.array(pred[0])
-            test_seq[:, 0:n_his*2 - 1, :, :] = test_seq[:, 1:n_his*2, :, :]
+            
+            test_seq[:, n_his*n_pred:n_his*(n_pred+1)-1, :, :] = test_seq[:, n_his*n_pred+1:n_his*(n_pred+1), :, :]
+            
             pred = np.expand_dims(pred, axis=-1)
-            test_seq[:, n_his*2 - 1, :, :] = pred
+            
+            test_seq[:, n_his*(n_pred+1)-1, :, :] = pred
             step_list.append(pred)
         pred_list.append(step_list)
     #  pred_array -> [n_pred, len(seq), n_route, C_0)
@@ -70,19 +67,20 @@ def model_inference(gf, model, pred, inputs, args, step_idx,
     y_val, len_val = multi_pred(gf, model, pred, \
             x_val, args.batch_size, args.n_his, args.n_pred, step_idx)
 
-    evl_val = evaluation(x_val[0:len_val, step_idx + args.n_his, :, :],
+    evl_val = evaluation(x_val[0:len_val, step_idx + args.n_his*(args.n_pred+1), :, :],
                          y_val[step_idx], x_stats)
     
     
     # chks: indicator that reflects the relationship of values between evl_val and min_va_val.
-    chks = evl_val < min_va_val
+    chks = [evl_val[0] > min_va_val[0], False, False]
     # update the metric on test set, if model's performance got improved on the validation.
     if sum(chks):
+        print("updated")
         min_va_val[chks] = evl_val[chks]
         y_pred, len_pred = multi_pred(gf, model, pred, \
                 x_test, args.batch_size, args.n_his, args.n_pred, step_idx)
 
-        evl_pred = evaluation(x_test[0:len_pred, step_idx + args.n_his*2, :, :],
+        evl_pred = evaluation(x_test[0:len_pred, step_idx + args.n_his*(args.n_pred+1), :, :],
                               y_pred[step_idx], x_stats)
         min_val = evl_pred
 
@@ -91,6 +89,8 @@ def model_inference(gf, model, pred, inputs, args, step_idx,
 
 def model_test(gf, model, pred, inputs, args):
     """test model"""
+    n_his = args.n_his
+    n_pred = args.n_pred
     if args.inf_mode == 'sep':
         # for inference mode 'sep', the type of step index is int.
         step_idx = args.n_pred - 1
@@ -107,10 +107,10 @@ def model_test(gf, model, pred, inputs, args):
             x_test, args.batch_size, args.n_his, args.n_pred, step_idx)
 
     # save result
-    gt = x_test[0:len_test, args.n_his*2:, :, :].reshape(-1, args.n_route)
+    gt = x_test[0:len_test, args.n_his*(n_pred+1):, :, :].reshape(-1, args.n_route)
     y_pred = y_test.reshape(-1, args.n_route)
     
-    inf = x_test[0:len_test, 0:args.n_pred, :, :].reshape(-1, args.n_route)
+    inf = x_test[0:len_test, n_his:n_his*n_pred+1:n_his, :, :].reshape(-1, args.n_route)
     np.savetxt(
         os.path.join(args.output_path, "groundtruth.csv"),
         gt.astype(np.int32),
@@ -127,16 +127,17 @@ def model_test(gf, model, pred, inputs, args):
         fmt='%d',
         delimiter=',')
     for i in range(step_idx + 1):
-        evl = evaluation(x_test[0:len_test, step_idx + args.n_his*2, :, :],
+        evl = evaluation(x_test[0:len_test, i+1+args.n_his*(n_pred+1)-1, :, :],
                          y_test[i], x_stats)
-        evg = evaluation(x_test[0:len_test, step_idx + args.n_his*2, :, :],
-                         x_test[0:len_test, step_idx, :, :], x_stats)
+        evg = evaluation(x_test[0:len_test, i+1+args.n_his*(n_pred+1)-1, :, :],
+                         x_test[0:len_test, (i+1)*n_his-1, :, :], x_stats)
         
         tf = evg
         te = evl
         print(
-            f'Time Step {i + 1}: MAPE {te[0]:7.3%}; MAE  {te[1]:4.3f}; RMSE {te[2]:6.3f}.'
+            f'Test set: ACC {te[0]:7.3%}; MAE  {te[1]:4.3f}; RMSE {te[2]:6.3f}.'
         )
         print(
-            f'BaseLine_Time Step {i + 1}: MAPE {tf[0]:7.3%}; MAE  {tf[1]:4.3f}; RMSE {tf[2]:6.3f}.'
+            f'Benchmark: ACC {tf[0]:7.3%}; MAE  {tf[1]:4.3f}; RMSE {tf[2]:6.3f}.'
         )
+    return y_test
