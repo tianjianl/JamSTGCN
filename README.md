@@ -32,7 +32,7 @@ Jam status often follow daily patterns. In order to let the model learn historic
 The original STGCN model was a regression model, optimizing a mean squared loss. Our traffic jam status has four classes: 1 -- smooth traffic; 2 -- temperate jam; 3 -- moderate jam; 4 -- heavy jam. So we changed it into a softmax with cross entropy classification model.
 
 ## Requirements
-You can use pip to install the requirements, assuming you have a version of python 3 or 
+You can use pip to install the requirements:
 ```
 sh requirements.sh
 ``` 
