@@ -40,12 +40,9 @@ sh requirements.sh
 
 
 All experiments was conducted with early stopping.
-|    Model    |Test Accuracy|
-| :---------: | :---------: |
-|  benchmark  |  64.306%    |
-| GAT         | 64.630%     | 
-|  GAT+his    |  66.498%    |
-|  GCN  |  67.382%    |
-| GCN + his|  64.731% |
+Right now I am still updating the experiments, adding new blocks, trying out new ideas.   
+Here's a example of what a training epoch should look like right now, the numbers is the cross entropy loss of the model.  
+
+<img width="526" alt="training" src="https://user-images.githubusercontent.com/20365304/148527350-afc54aa7-4ab0-4f6d-bd77-db69a3adbb64.png">
 
 
