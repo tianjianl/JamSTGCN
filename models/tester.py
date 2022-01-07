@@ -96,7 +96,12 @@ def model_test(gf, model, pred, inputs, args):
     gt = x_test[0:len_test, args.n_his*2:, :, :].reshape(-1, args.n_route)
     y_pred = y_test.reshape(-1, args.n_route)
     
+<<<<<<< Updated upstream
     inf = x_test[0:len_test, 0:args.n_pred, :, :].reshape(-1, args.n_route)
+=======
+    inf = x_test[0:len_test, n_his:n_his*n_pred+1:n_his, :, :].reshape(-1, args.n_route)
+    
+>>>>>>> Stashed changes
     np.savetxt(
         os.path.join(args.output_path, "groundtruth.csv"),
         gt.astype(np.int32),
@@ -115,10 +120,21 @@ def model_test(gf, model, pred, inputs, args):
     for i in range(step_idx + 1):
         evl = evaluation(x_test[0:len_test, step_idx + args.n_his*2, :, :],
                          y_test[i], x_stats)
+<<<<<<< Updated upstream
         evg = evaluation(x_test[0:len_test, step_idx + args.n_his*2, :, :],
                          x_test[0:len_test, step_idx, :, :], x_stats)
+=======
+
+        evg = evaluation(x_test[0:len_test, i+1+args.n_his*(n_pred+1)-1, :, :],
+                         x_test[0:len_test, (i+1)*n_his-1, :, :], x_stats)
+>>>>>>> Stashed changes
         
-        tf = evg
+        test_eva = x_test[0:len_test, i+1+args.n_his*(n_pred+1)-1, :, :]
+        
+        evo = evaluation(test_eva, np.ones_like(test_eva), x_stats)
+
+        tf = evo
+        
         te = evl
         print(
             f'Test set: ACC {te[0]:7.3%}; MAE  {te[1]:4.3f}; RMSE {te[2]:6.3f}.'

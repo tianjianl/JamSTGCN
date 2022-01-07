@@ -26,11 +26,14 @@ def RMSE(v, v_):
 
 def MAE(v, v_):
     """Mean absolute error."""
-    print('v.shape =', v.shape)
-    print('v_.shape =', v_.shape)
     return np.mean(np.abs(v_ - v))
 
-
+def ACC(v, v_):
+    #here v and v_ are both (b, n, 1)
+    vflat = np.ndarray.flatten(v)
+    v_flat = np.ndarray.flatten(v_)
+    
+    return (vflat == v_flat).sum()/len(v_flat)
 def evaluation(y, y_, x_stats):
     """Calculate MAPE, MAE and RMSE between ground truth and prediction."""
     dim = len(y_.shape)
@@ -39,7 +42,7 @@ def evaluation(y, y_, x_stats):
         # single_step case
         v = z_inverse(y, x_stats['mean'], x_stats['std'])
         v_ = z_inverse(y_, x_stats['mean'], x_stats['std'])
-        return np.array([MAPE(v, v_), MAE(v, v_), RMSE(v, v_)])
+        return np.array([ACC(v, v_), MAE(v, v_), RMSE(v, v_)])
     else:
         # multi_step case
         tmp_list = []

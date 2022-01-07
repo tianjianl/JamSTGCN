@@ -17,23 +17,36 @@ from models.model import STGCNModel
 from models.tester import model_inference, model_test
 
 def main(args):
+       
+    if args.task == 'train':
+        input_file = 'dataset/' + args.dataset + '/input_oct.csv'
+        input_prev = 'dataset/' + args.dataset + '/input_sept.csv'
     
-    input_file = 'dataset/' + args.dataset + '/input_oct.csv'
-    input_prev = 'dataset/' + args.dataset + '/input_sept.csv'
+    if args.task == 'infer':
+        input_file = 'dataset/' + args.dataset + '/input_nov.csv'
+        input_prev = 'dataset/' + args.dataset + '/input_oct.csv'
+
     interval = int(args.dataset[0:2])
+<<<<<<< Updated upstream
     data = data_gen_mydata(input_file, input_prev, args.n_route, args.n_his, args.n_pred, interval, args.dataset, (args.n_val, args.n_test))
+=======
+    data = data_gen_mydata(input_file, input_prev, args.n_route, args.n_his, args.n_pred, interval, args.dataset, args.task, (args.n_val, args.n_test))
+    
+>>>>>>> Stashed changes
     log.info(data.get_stats())
-    log.info(data.get_len('train'))
-   
+    #log.info(data.get_len('train'))
+    log.info(data.get_len('test'))
+
     gf = GraphFactory(args)
     model = STGCNModel(args)
-#   train_loss = fl.reduce_sum((y - label) * (y - label))
-#   lr = fl.exponential_decay(
-#           learning_rate=args.lr,
-#           #decay_steps=5 * epoch_step,
-#           decay_rate=0.7,
-#           staircase=True)
-#    lr = paddle.optimizer.lr.ExponentialDecay(learning_rate=args.lr, gamma=0.7, verbose=False)          
+
+    if args.task == 'infer':
+        model_state_dict = paddle.load('model_state_dict')
+        model.load_dict(model_state_dict)
+        pred = 0 
+        model_test(gf, model, pred, data, args)
+        exit(0)       
+#   lr = paddle.optimizer.lr.ExponentialDecay(learning_rate=args.lr, gamma=0.7, verbose=False)          
     
     lr = args.lr
     if args.opt == 'RMSProp':
@@ -79,10 +92,31 @@ def main(args):
         print(f'ACC {va[0]:7.3%}, {te[0]:7.3%}; '
             f'MAE  {va[1]:4.3f}, {te[1]:4.3f}; '
             f'RMSE {va[2]:6.3f}, {te[2]:6.3f}.')
+<<<<<<< Updated upstream
         if epoch % 1 == 0:
+=======
+        
+        if epoch % 5 == 0:
+>>>>>>> Stashed changes
             model_test(gf, model, pred, data, args)
+    paddle.save(model.state_dict(), "model_state_dict")
+    
+
+    input_file = 'dataset/' + args.dataset + '/input_nov.csv'
+    input_prev = 'dataset/' + args.dataset + '/input_oct.csv'
+
+    interval = int(args.dataset[0:2])
+    data = data_gen_mydata(input_file, input_prev, args.n_route, args.n_his, args.n_pred, interval, args.dataset, 'infer', (args.n_val, args.n_test))
+    
+    log.info(data.get_stats())
+    #log.info(data.get_len('train'))
+    log.info(data.get_len('test'))
+
+    model_test(gf, model, pred, data, args)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('--task', type=str, default='train', help='train, infer')
     parser.add_argument('--n_route', type=int, default=330)
     parser.add_argument('--n_his', type=int, default=12)
     parser.add_argument('--n_pred', type=int, default=1)
@@ -106,7 +140,12 @@ if __name__ == "__main__":
     parser.add_argument('--act_func', type=str, default = 'GLU')
     parser.add_argument('--dataset', type=str, default='15min_mean')
     args = parser.parse_args()
+<<<<<<< Updated upstream
     blocks = [[16, 16, 16], [16, 16, 64]]
+=======
+    blocks = [[8, 8, 16], [16, 16, 24]]
+    blocks_l = [[16, 16, 16],[16, 16, 32]]
+>>>>>>> Stashed changes
     args.blocks = blocks
     log.info(args)
     if not os.path.exists(args.output_path):
