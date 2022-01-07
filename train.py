@@ -57,8 +57,7 @@ def main(args):
         step_idx = tmp_idx = np.arange(3, args.n_pred + 1, 3) - 1
         min_val = min_va_val = np.array([4e1, 1e5, 1e5]) * len(step_idx)
     else:
-        print('error')
-        #raise ValueError(f'Error: test mode "{args.inf_mode}" is not defined')
+        raise ValueError(f'Error: test mode "{args.inf_mode}" is not defined')
     step = 0
     for epoch in tqdm.tqdm(range(1, args.epochs + 1)):
         for idx, x_batch in enumerate(
@@ -85,9 +84,9 @@ def main(args):
         min_va_val, min_val = model_inference(gf, model, pred, data, args, step_idx, min_va_val, min_val)
         
         va, te = min_va_val, min_val
-       # print(f'ACC {va[0]:7.3%}, {te[0]:7.3%}; '
-       #     f'MAE  {va[1]:4.3f}, {te[1]:4.3f}; '
-       #     f'RMSE {va[2]:6.3f}, {te[2]:6.3f}.')
+        print(f'ACC {va[0]:7.3%}, {te[0]:7.3%}; '
+            f'MAE  {va[1]:4.3f}, {te[1]:4.3f}; '
+            f'RMSE {va[2]:6.3f}, {te[2]:6.3f}.')
         
         if epoch % 5 == 0:
             model_test(gf, model, pred, data, args)
