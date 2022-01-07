@@ -39,7 +39,6 @@ sh requirements.sh
 ## Experiments
 
 
-All experiments was conducted with early stopping.
 Right now I am still updating the experiments, adding new blocks, trying out new ideas.   
 Here's a example of what a training epoch should look like right now, the numbers is the cross entropy loss of the model.  
 
