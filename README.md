@@ -1,7 +1,6 @@
 ## About
 This repository contains the code of a PaddlePaddle2.2 implementation of STGCN based on the paper Spatio-Temporal Graph Convolutional Networks: A Deep Learning Framework for Traffic Forecasting https://arxiv.org/abs/1709.04875, with a few modifications in the model architecture to tackle with traffic jam forecasting problems.  
 
-You can find some of the latest updates in the develop branch. 
 
 ## Related Papers
 Semi-Supervised Classification with Graph Convolutional Networks https://arxiv.org/abs/1609.02907 (GCN)  
@@ -29,7 +28,7 @@ Jam status often follow daily patterns. In order to let the model learn historic
 <img width="551" src="https://user-images.githubusercontent.com/20365304/144978158-b4baf9fd-a18c-40c5-9c77-dd73572f6ed3.png">
 
 #### Classification
-The original STGCN model was a regression model, optimizing a mean squared loss. Our traffic jam status has four classes: 1 -- smooth traffic; 2 -- temperate jam; 3 -- moderate jam; 4 -- heavy jam. So we changed it into a softmax with cross entropy classification model.
+The original STGCN model was a regression model, optimizing a mean squared loss. Our traffic jam status has four classes: 1 -- smooth traffic; 2 -- temperate jam; 3 -- moderate jam; 4 -- heavy jam. So we changed it into a softmax with cross entropy classification model. Because in most of the cases, the traffic are smooth which makes label 1 dominates the others. We use a weighted cross entropy loss to punish incorrect classifications of 2, 3 and 4 more serverely. 
 
 ## Requirements
 You can use pip to install the requirements:
