@@ -45,19 +45,6 @@ def seq_gen(len_seq, data_seq, offset, n_frame, n_route, day_slot, C_0=1):
     return tmp_seq
 
 
-<<<<<<< Updated upstream
-def data_gen_mydata(input_file, input_prev, n, n_his, n_pred, interval, dataset, n_config):
-    """data processing
-    """
-    #param
-    n_val, n_test = n_config
-    nums_per_hour = int(60/interval)
-    if os.path.isfile(dataset+'.csv'):
-#        df = pd.read_pickle(dataset+'.pkl')        
-        df = pd.read_csv(dataset+'.csv')
-        df = df.drop(columns=['date'])
-#        df.to_csv(dataset+'.csv')
-=======
 def data_gen_mydata(input_file, input_prev, n, n_his, n_pred, interval, dataset, task, n_config):
     """data processing
     """
@@ -71,33 +58,16 @@ def data_gen_mydata(input_file, input_prev, n, n_his, n_pred, interval, dataset,
         df = pd.read_csv(filename)
        #df = df.drop(columns=['date'])
    
->>>>>>> Stashed changes
     # data
     else:
         x = pd.read_csv(input_file)
         x_prev = pd.read_csv(input_prev)
         x = x.drop(columns=['date'])
         x_prev = x_prev.drop(columns=['date'])
-    
-   
+        
         df = pd.DataFrame(columns=x.columns)
-        #the time step we want to predict = i + n_his
+        #the time step we want to predict = i + n_his 
         for i in tqdm.tqdm(range(0, len(x) - n_pred - n_his + 1)):
-<<<<<<< Updated upstream
-            for j in range(i + n_his - 24*n_his*nums_per_hour, i + n_his - 24*nums_per_hour + 1, 24*nums_per_hour):
-                if j < 0:
-                    df = df.append(x_prev[j-1:j])
-                else:
-                    df = df.append(x[j:j+1])
-
-            df = df.append(x[i:i + n_his + n_pred])
-    
-        df.to_pickle(dataset+'.pkl')
-
-    print(df.iloc[:,:40].head(33))
-    
-    data = df.values.reshape(-1, 2*n_his + n_pred,  n, 1)
-=======
             #df = [func(j) for j in xrange(i + n_his - 24*n_his*nums_per_hour, i + n_his - 24*nums_per_hour + 1, 24*nums_per_hour)]
             for k in range(n_pred):
                 for j in range(i+n_his-24*n_his*nums_per_hour, i+n_his-24*nums_per_hour+1, 24*nums_per_hour):
@@ -128,7 +98,6 @@ def data_gen_mydata(input_file, input_prev, n, n_his, n_pred, interval, dataset,
         exit(0)
     print(df.iloc[:,:7].head(70))
     data = df.values.reshape(-1, (n_pred+1)*n_his + n_pred,  n, 1)
->>>>>>> Stashed changes
     #total num of data n * (n_his + n_pred)
     n_train = data.shape[0] - n_val - n_test
     x_stats = {'mean': np.mean(data), 'std': np.std(data)}

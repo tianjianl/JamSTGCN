@@ -27,12 +27,8 @@ def main(args):
         input_prev = 'dataset/' + args.dataset + '/input_oct.csv'
 
     interval = int(args.dataset[0:2])
-<<<<<<< Updated upstream
-    data = data_gen_mydata(input_file, input_prev, args.n_route, args.n_his, args.n_pred, interval, args.dataset, (args.n_val, args.n_test))
-=======
     data = data_gen_mydata(input_file, input_prev, args.n_route, args.n_his, args.n_pred, interval, args.dataset, args.task, (args.n_val, args.n_test))
     
->>>>>>> Stashed changes
     log.info(data.get_stats())
     #log.info(data.get_len('train'))
     log.info(data.get_len('test'))
@@ -57,12 +53,13 @@ def main(args):
     if args.inf_mode == 'sep':
         step_idx = args.n_pred - 1
         tmp_idx = [step_idx]
-        min_val = min_va_val = np.array([4e1, 1e5, 1e5])
+        min_val = min_va_val = np.array([1e-5, 1e-5, 1e-5])
     elif args.inf_mode == 'merge':
         step_idx = tmp_idx = np.arange(3, args.n_pred + 1, 3) - 1
         min_val = min_va_val = np.array([4e1, 1e5, 1e5]) * len(step_idx)
     else:
         raise ValueError(f'Error: test mode "{args.inf_mode}" is not defined')
+    
     
     step = 0
     for epoch in tqdm.tqdm(range(1, args.epochs + 1)):
@@ -73,8 +70,8 @@ def main(args):
                     dynamic_batch=True,
                     shuffle=True)):
            
-            x = np.array(x_batch[:, 0:args.n_his, :, :], dtype = np.int32)
-            x_input = np.array(x_batch[:, 0:2*args.n_his+1, :, :], dtype = np.int32)
+            x = np.array(x_batch[:, args.n_his*args.n_pred:args.n_his*(args.n_pred+1), :, :], dtype = np.int32)
+            x_input = np.array(x_batch[:, :args.n_his*(args.n_pred+1)+1, :, :], dtype = np.int32)
             
             graph = gf.build_graph(x)
             graph.tensor()
@@ -84,20 +81,17 @@ def main(args):
                 
             optim.step()
             optim.clear_grad()
+                
             if idx % 5 == 0:
                 print(epoch, idx, loss)
-
         min_va_val, min_val = model_inference(gf, model, pred, data, args, step_idx, min_va_val, min_val)
+        
         va, te = min_va_val, min_val
         print(f'ACC {va[0]:7.3%}, {te[0]:7.3%}; '
             f'MAE  {va[1]:4.3f}, {te[1]:4.3f}; '
             f'RMSE {va[2]:6.3f}, {te[2]:6.3f}.')
-<<<<<<< Updated upstream
-        if epoch % 1 == 0:
-=======
         
         if epoch % 5 == 0:
->>>>>>> Stashed changes
             model_test(gf, model, pred, data, args)
     paddle.save(model.state_dict(), "model_state_dict")
     
@@ -119,7 +113,7 @@ if __name__ == "__main__":
     parser.add_argument('--task', type=str, default='train', help='train, infer')
     parser.add_argument('--n_route', type=int, default=330)
     parser.add_argument('--n_his', type=int, default=12)
-    parser.add_argument('--n_pred', type=int, default=1)
+    parser.add_argument('--n_pred', type=int, default=8)
     parser.add_argument('--batch_size', type=int, default=10)
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--save', type=int, default=10)
@@ -140,12 +134,8 @@ if __name__ == "__main__":
     parser.add_argument('--act_func', type=str, default = 'GLU')
     parser.add_argument('--dataset', type=str, default='15min_mean')
     args = parser.parse_args()
-<<<<<<< Updated upstream
-    blocks = [[16, 16, 16], [16, 16, 64]]
-=======
     blocks = [[8, 8, 16], [16, 16, 24]]
     blocks_l = [[16, 16, 16],[16, 16, 32]]
->>>>>>> Stashed changes
     args.blocks = blocks
     log.info(args)
     if not os.path.exists(args.output_path):
