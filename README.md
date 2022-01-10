@@ -28,6 +28,9 @@ Jam status often follow daily patterns. In order to let the model learn historic
 
 <img width="551" src="https://user-images.githubusercontent.com/20365304/144978158-b4baf9fd-a18c-40c5-9c77-dd73572f6ed3.png">
 
+#### Multi-Step Prediction
+The model is implemented to predict the jam status of several future time steps. First we feed the input data into the model to generate prediction of the first future time step. Then we concat the predicted status with the original input, feed to the model to generate the prediction of the next time step and so on. 
+
 #### Classification
 The original STGCN model was a regression model, optimizing a mean squared loss. Our traffic jam status has four classes: 1 -- smooth traffic; 2 -- temperate jam; 3 -- moderate jam; 4 -- heavy jam. So we changed it into a softmax with cross entropy classification model. Because in most of the cases, the traffic are smooth which makes label 1 dominates the others. We use a weighted cross entropy loss to punish incorrect classifications of 2, 3 and 4 more serverely. 
 
