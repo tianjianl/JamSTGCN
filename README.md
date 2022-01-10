@@ -1,6 +1,7 @@
 ## About
-This repository contains the code of a PaddlePaddle2.2 implementation of STGCN based on the paper Spatio-Temporal Graph Convolutional Networks: A Deep Learning Framework for Traffic Forecasting https://arxiv.org/abs/1709.04875, with a few modifications in the model architecture to tackle with traffic jam forecasting problems.  
+This repository contains the code of a PaddlePaddle2.2 implementation of STGCN based on the paper Spatio-Temporal Graph Convolutional Networks: A Deep Learning Framework for Traffic Forecasting https://arxiv.org/abs/1709.04875, with a few modifications in the model architecture to tackle with traffic jam forecasting problems.    
 
+Forecasting traffic jams is not that similar to forecasting traffic flow, which we have a redundant amount of data. However, jams only occur in the largest cities and often only during peak hours, resulting in a unbalanced dataset. In order to study the jam patterns, we select roads in Haidian District, Beijing that have much more jam than others. 
 
 ## Related Papers
 Semi-Supervised Classification with Graph Convolutional Networks https://arxiv.org/abs/1609.02907 (GCN)  
@@ -27,6 +28,9 @@ Jam status often follow daily patterns. In order to let the model learn historic
 
 <img width="551" src="https://user-images.githubusercontent.com/20365304/144978158-b4baf9fd-a18c-40c5-9c77-dd73572f6ed3.png">
 
+#### Multi-Step Prediction
+The model is implemented to predict the jam status of several future time steps. First we feed the input data into the model to generate prediction of the first future time step. Then we concat the predicted status with the original input, feed to the model to generate the prediction of the next time step and so on. 
+
 #### Classification
 The original STGCN model was a regression model, optimizing a mean squared loss. Our traffic jam status has four classes: 1 -- smooth traffic; 2 -- temperate jam; 3 -- moderate jam; 4 -- heavy jam. So we changed it into a softmax with cross entropy classification model. Because in most of the cases, the traffic are smooth which makes label 1 dominates the others. We use a weighted cross entropy loss to punish incorrect classifications of 2, 3 and 4 more serverely. 
 
@@ -39,13 +43,9 @@ sh requirements.sh
 ## Experiments
 
 
-All experiments was conducted with early stopping.
-|    Model    |Test Accuracy|
-| :---------: | :---------: |
-|  benchmark  |  64.306%    |
-| GAT         | 64.630%     | 
-|  GAT+his    |  66.498%    |
-|  GCN  |  67.382%    |
-| GCN + his|  64.731% |
+Right now I am still updating the experiments, adding new blocks, trying out new ideas.   
+Here's a example of what a training epoch should look like right now, the numbers is the cross entropy loss of the model.  
+
+<img width="526" alt="training" src="https://user-images.githubusercontent.com/20365304/148527350-afc54aa7-4ab0-4f6d-bd77-db69a3adbb64.png">
 
 
