@@ -56,3 +56,5 @@ I think the [self-distillation methods](https://arxiv.org/abs/1905.08094) has th
 
 Also [pretraining techniques](https://cs.stanford.edu/people/jure/pubs/pretrain-iclr20.pdf) also has their potentials in generating spatial-temporal representations for road segements. 
 
+
+
