@@ -50,4 +50,9 @@ Here's a example of what a training epoch should look like right now, the number
 
 <img width="526" alt="training" src="https://user-images.githubusercontent.com/20365304/148527350-afc54aa7-4ab0-4f6d-bd77-db69a3adbb64.png">
 
+## Future Directions
+
+I think the [self-distillation methods](https://arxiv.org/abs/1905.08094) has their potential in imporving long term prediction by first allowing the teacher method to learn historic patterns to make a raw prediction of whether a road segment is jammed or not, then the student model utilizes graph structured data to use the nearby traffic conditions to make a more educated guess of the future jam status.
+
+Also [pretraining techniques](https://cs.stanford.edu/people/jure/pubs/pretrain-iclr20.pdf) also has their potentials in generating spatial-temporal representations for road segements. 
 
