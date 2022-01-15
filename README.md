@@ -44,7 +44,7 @@ sh requirement.sh
 
 
 Right now I am still updating the experiments, adding new blocks, trying out new ideas.   
-Here's a example of what a training epoch should look like right now, the numbers is the cross entropy loss of the model.  
+Here's a example of what a training epoch should look like right now, the numbers are the cross entropy loss of the model.  
 
 <img width="526" alt="training" src="https://user-images.githubusercontent.com/20365304/148527350-afc54aa7-4ab0-4f6d-bd77-db69a3adbb64.png">
 
