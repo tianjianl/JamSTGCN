@@ -37,7 +37,7 @@ The original STGCN model was a regression model, optimizing a mean squared loss.
 ## Requirements
 You can use pip to install the requirements:
 ```
-sh requirements.sh
+sh requirement.sh
 ``` 
 
 ## Experiments
