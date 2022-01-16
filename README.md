@@ -1,8 +1,9 @@
 ## About
 This repository contains the code of a PaddlePaddle2.2 implementation of STGCN based on the paper Spatio-Temporal Graph Convolutional Networks: A Deep Learning Framework for Traffic Forecasting https://arxiv.org/abs/1709.04875, with a few modifications in the model architecture to tackle with traffic jam forecasting problems.    
 
-Forecasting traffic jams is not that similar to forecasting traffic flow, which we have a redundant amount of data. However, jams only occur in the largest cities and often only during peak hours, resulting in a unbalanced dataset. In order to study the jam patterns, we select roads in Haidian District, Beijing that have much more jam than others. 
+Forecasting traffic jams is not that similar to forecasting traffic flow, which we have a redundant amount of data. However, jams only occur in the largest cities and often only during peak hours, resulting in a unbalanced dataset. In order to study the jam patterns, we select roads in Haidian District, Beijing that have much more jam than others.   
 
+For a more detailed version of my intuitions and the model, please refer [this draft]() of my final report. I am still working on the last few sections of it. 
 ## Related Papers
 Semi-Supervised Classification with Graph Convolutional Networks https://arxiv.org/abs/1609.02907 (GCN)  
 
