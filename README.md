@@ -6,6 +6,8 @@ Forecasting traffic jams is not that similar to forecasting traffic flow, which 
 For a more detailed version of my intuitions and the model, please refer to [this draft](res_stgcn_jam.pdf) of my final report. I am still working on the last few sections of it. 
 
 ## Related Papers
+Spatio-Temporal Graph Convolutional Networks: A Deep Learning Framework for Traffic Forecasting https://arxiv.org/abs/1709.04875  
+
 Semi-Supervised Classification with Graph Convolutional Networks https://arxiv.org/abs/1609.02907 (GCN)  
 
 Inductive Representation Learning on Large Graphs https://arxiv.org/abs/1706.02216 （GraphSAGE）  
